@@ -10,15 +10,17 @@ include("wirteVTK.jl")
 
 const to = TimerOutput()
 ps = MKLPardisoSolver()
-nn = [ 4 8 12 16 ]
-for i in 1:4
-ndiv = nn[i]
-ndiv2 = nn[i]
-n = nn[i]
-# ndiv = 4
-# ndiv2 = 4
-# n = 4
+# nn = [ 4 8 12 16 ]
+# for i in 1:4
+# ndiv = nn[i]
+# ndiv2 = nn[i]
+# n = nn[i]
+ndiv = 8
+ndiv2 = 8
+n = 8
 poly = "tri3"
+test = "cook"
+# poly = "nouniform"
 # poly = "tri6"
 # poly = "quad"
 @timeit to "import data" begin
@@ -29,23 +31,25 @@ poly = "tri3"
 # elements, nodes, sp, type = import_HR_GLS("./msh/cantilever_nonuniform_"*string(ndiv)*".msh","./msh/cantilever_nonuniform_"*string(ndiv2)*".msh")
 elements, nodes, sp, type, Ω, nodes_c= import_HR_GLS("./msh/cook_membrane_"*poly*"_"*string(ndiv)*".msh","./msh/cook_membrane_"*poly*"_"*string(ndiv2)*".msh",n)
 end
-
+nc = length(nodes_c)
 nₑ = length(elements["Ωᵘ"])
-nₛ = 6
+nₑₛ = length(elements["Ωˢ"])
+nₛ = 3
 nᵤ = length(nodes)
 # nₚ = length(nodes_p)
 # nₚ = length(nodes)
-
+ni = 6
 L = 48.0
 D = 44
 P = 6.25
 ℎ = D/ndiv
-
+# ℎ = 1.0
 # Ē = 3e6
 # ν̄  = 0.3
 E = 70.0
-# ν = 0.3
-ν = 0.5-1e-8
+# ν = 0.3 
+# ν = 0.5-1e-4
+ν = 0.499
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 I = D^3/12
@@ -56,11 +60,36 @@ Cᵢⱼᵢⱼ = E/(1+ν)/2
 𝐺 = E/(1+ν)/2
 K=E/3/(1-2ν )
 
+ℎ = zeros(nₑₛ*nₛ)
+β = zeros(nₑₛ*nₛ)
+for (i,elm) in enumerate(elements["Ω"])
+    𝓒 = elm.𝓒
+    𝓒ₚ = elements["Ωˢ"][i].𝓒
+    x1 = 𝓒[1].x
+    x2 = 𝓒[2].x
+    x3 = 𝓒[3].x
+    y1 = 𝓒[1].y
+    y2 = 𝓒[2].y
+    y3 = 𝓒[3].y
+    A = 0.5*sqrt((x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))^2)
+    # A = 0.5*abs(x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))
+    hₑ= sqrt(A)
+     for (j,xⱼ) in enumerate(𝓒ₚ)
+        J = xⱼ.𝐼
+        ℎ[J] =hₑ
+        β[J] =10*hₑ^2/2/𝐺
+     end
+end
+for elm in elements["Ωˢ"]
+    𝓒ₚ = elm.𝓒
+        push!(𝓒ₚ,:β=>β)
+        push!(𝓒ₚ,:ℎ=>ℎ)
+end
 
 
-β =0.1*ℎ^2/2/𝐺
-prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->β)
-prescribe!(elements["Ωˢ"],:ℎ=>(x,y,z)->ℎ) 
+# β =1*ℎ^2/2/𝐺
+# prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->β)
+# prescribe!(elements["Ωˢ"],:ℎ=>(x,y,z)->ℎ) 
 prescribe!(elements["Ωˢ"],:E=>(x,y,z)->E)
 prescribe!(elements["Ωˢ"],:ν=>(x,y,z)->ν)
 
@@ -132,20 +161,62 @@ fᵘ = zeros(2*nᵤ)
     d = [kˢˢ kˢᵘ;kˢᵘ' zeros(2*nᵤ,2*nᵤ)]\[fˢ;-fᵘ]
     d₁ = d[3*nₛ*nₑ+1:2:end]
     d₂ = d[3*nₛ*nₑ+2:2:end]
+    dₛ₁₁ = d[1:3:3*nₛ*nₑₛ]
+    dₛ₂₂ = d[2:3:3*nₛ*nₑₛ]
+    dₛ₁₂ = d[3:3:3*nₛ*nₑₛ]
     push!(nodes,:d₁=>d₁,:d₂=>d₂)
+    for elm in elements["Ωˢ"]
+        𝓒ₚ = elm.𝓒
+        𝓖 = elm.𝓖
+            push!(𝓒ₚ,:dₛ₁₁=>dₛ₁₁,:dₛ₂₂=>dₛ₂₂,:dₛ₁₂=>dₛ₁₂)
+    end
+
+    pₑ = zeros(nₑ)
     
-    # 𝐿₂ = L₂(elements["Ωᵍ"])
-    # 𝐻ₑ, 𝐿₂ = Hₑ_PlaneStress(elements["Ωᵍᵘ"])
-    # println(log10(𝐿₂))
-    # println(log10(𝐻ₑ))
-# println(log10(Hₑ_dev))
-# println(log10(L₂_𝑝))
-# eval(VTK_Guass_point)
-# eval(displacement_stress)
+    for (i,elm) in enumerate(elements["Ωˢ"])
+        𝓒ₚ = elm.𝓒
+        𝓖 = elm.𝓖
+        𝓒 = elements["Ω"][i].𝓒
+        a = length(𝓒)
+        x = 0.0
+        y = 0.0
+        for j in 𝓒 
+            x += j.x
+            y += j.y
+        end
+        xc = x/a
+        yc = y/a
+        if nₛ==3
+        σ₁₁ = 𝓒ₚ[1].dₛ₁₁+𝓒ₚ[2].dₛ₁₁*xc+𝓒ₚ[3].dₛ₁₁*yc
+        σ₂₂ = 𝓒ₚ[1].dₛ₂₂+𝓒ₚ[2].dₛ₂₂*xc+𝓒ₚ[3].dₛ₂₂*yc
+        elseif nₛ==6
+            σ₁₁ = 𝓒ₚ[1].dₛ₁₁+𝓒ₚ[2].dₛ₁₁*xc+𝓒ₚ[3].dₛ₁₁*yc+𝓒ₚ[4].dₛ₁₁*xc^2+𝓒ₚ[6].dₛ₁₁*yc^2+𝓒ₚ[5].dₛ₁₁*xc*yc
+            σ₂₂ = 𝓒ₚ[1].dₛ₂₂+𝓒ₚ[2].dₛ₂₂*xc+𝓒ₚ[3].dₛ₂₂*yc+𝓒ₚ[4].dₛ₂₂*xc^2+𝓒ₚ[6].dₛ₂₂*yc^2+𝓒ₚ[5].dₛ₂₂*xc*yc
+        end
+        σ₃₃ = ν*(σ₁₁ + σ₂₂)
+        # pₑ[i] = σ₁₁
+        pₑ[i] = (σ₁₁ + σ₂₂ + σ₃₃)/3 
+    end
+    
+    p_node = zeros(nc)
+    
+    w = zeros(nc)
+    for (i,elm) in enumerate(elements["Ω"])
+        𝓒 = elm.𝓒
+         for (j,xⱼ) in enumerate(𝓒)
+            J = xⱼ.𝐼
+            p_node[J] +=pₑ[i]
+            w[J] +=1 
+         end
+    end
+    
+    eval(VTK_HR_displacement_pressure)
+    eval(VTK_HR_displacement_pressure_smoothing)
+    # eval(VTK_HR_displacement_pressure_sigma11)
 
 
 α = 1.0
-nc = length(nodes_c)
+
 # vertices = [[node.x+α*node.d₁ for node in nodes] [node.y+α*node.d₂ for node in nodes]]
 colors = zeros(nc)
 x = zeros(nc)
@@ -158,7 +229,7 @@ for (i,node_c) in enumerate(nodes_c)
     ni = length(indices)
     𝓒 = [nodes[i] for i in indices]
     # data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-    data = Dict([:x=>(2,[xs]),:y=>(2,[ys]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:∂𝝭∂x=>(4,zeros(ni)),:∂𝝭∂y=>(4,zeros(ni)),:𝗠=>(0,zeros(21)),:∂𝗠∂x=>(0,zeros(21)),:∂𝗠∂y=>(0,zeros(21))])
+    data = Dict([:x=>(2,[xs]),:y=>(2,[ys]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:∂𝝭∂x=>(4,zeros(ni)),:∂𝝭∂y=>(4,zeros(ni)),:𝗠=>(0,zeros(60)),:∂𝗠∂x=>(0,zeros(60)),:∂𝗠∂y=>(0,zeros(60))])
     ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
     𝓖 = [ξ]
     a = type(𝓒,𝓖)
@@ -182,7 +253,12 @@ for (i,node_c) in enumerate(nodes_c)
         u₁ += 𝝭[k]*xₖ.d₁
         u₂ += 𝝭[k]*xₖ.d₂
     end
-    p=K*(ε₁₁+ε₂₂)
+    σ₁₁ = Cᵢᵢᵢᵢ*ε₁₁ +Cᵢᵢⱼⱼ*ε₂₂
+    σ₂₂ = Cᵢᵢⱼⱼ*ε₁₁ +Cᵢᵢᵢᵢ*ε₂₂
+    σ₁₂ = Cᵢⱼᵢⱼ*ε₁₂
+    σ₃₃ = ν*(σ₁₁ + σ₂₂)
+    p = (σ₁₁ + σ₂₂ + σ₃₃)/3 
+    # p=K*(ε₁₁+ε₂₂)
     x[i] = xs+α*u₁
     y[i] = ys+α*u₂
     colors[i] = p
@@ -210,15 +286,15 @@ end
 
 
 
-# points = [[node.x+α*node.d₁ for node in nodes]';[node.y+α*node.d₂ for node in nodes]';zeros(1,nᵤ)]
-points = [x';y';zeros(1,nc)]
-cells = [MeshCell(VTKCellTypes.VTK_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ω"]]
-# # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-# # cells = [MeshCell(VTKCellTypes.VTK_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-# # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-vtk_grid("./vtk/cook_GLS_"*poly*"_"*string(ndiv)*"_"*string(ndiv)*"_"*string(β),points,cells) do vtk
-    vtk["𝑝"] = colors
-end
+# # points = [[node.x+α*node.d₁ for node in nodes]';[node.y+α*node.d₂ for node in nodes]';zeros(1,nᵤ)]
+# points = [x';y';zeros(1,nc)]
+# cells = [MeshCell(VTKCellTypes.VTK_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ω"]]
+# # # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# # # cells = [MeshCell(VTKCellTypes.VTK_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# # # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# vtk_grid("./vtk/cook_GLS_"*poly*"_"*string(ndiv)*"_"*string(ndiv)*"_"*string(β),points,cells) do vtk
+#     vtk["𝑝"] = colors
+# end
 
 println(y[3] - nodes_c[3].y)
 # @timeit to "plot figure" begin
@@ -273,4 +349,4 @@ println(y[3] - nodes_c[3].y)
 # fig
 show(to)
 
-end
+# end

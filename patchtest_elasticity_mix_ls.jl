@@ -1,6 +1,6 @@
 using SparseArrays, Pardiso
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric,∫∫σᵢⱼσₖₗdxdy_PlaneStrian,∫σᵢⱼnⱼuᵢds_PlaneStrian,∫∫∇σᵢⱼuᵢdxdy_PlaneStrian,∫σᵢⱼnⱼgᵢds_PlaneStrian,∫∫τ∇σᵢⱼ∇σᵢₖdxdy,∫∫σᵢⱼσₖₗdxdy, ∫∫∇σᵢⱼuᵢdxdy, ∫σᵢⱼnⱼuᵢds, ∫σᵢⱼnⱼgᵢds
+using ApproxOperator.Elasticity: ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric,∫∫τ∇σᵢⱼ∇σᵢₖdxdy,∫∫σᵢⱼσₖₗdxdy, ∫∫∇σᵢⱼuᵢdxdy, ∫σᵢⱼnⱼuᵢds, ∫σᵢⱼnⱼgᵢds,  ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Real
 
 include("import_patchtest.jl")
 
@@ -28,7 +28,7 @@ set𝝭!(elements["Γᵘ"])
 set∇𝝭!(elements["Ωˢ"])
 set𝝭!(elements["∂Ωˢ"])
 
-n = 1
+n = 2
 # u(x,y) = x^5
 # v(x,y) = - 5*x^4*y
 # ∂u∂x(x,y) = 5*x^4

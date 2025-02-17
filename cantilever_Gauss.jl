@@ -10,15 +10,15 @@ include("import_cantilever.jl")
 
 const to = TimerOutput()
 # ps = MKLPardisoSolver()
-# n = [ 4 8 16 32 ]
-# for i in 1:4
-# ndiv = n[i]
-# ndiv2 = n[i]
-ndiv = 4
+n = [ 2 4 8 16 32 ]
+for i in 1:4
+ndiv = n[i]
+ndiv2 = n[i]
+# ndiv = 4
 
 
-# poly = "tri3"
-poly = "nonuniform"
+poly = "tri3"
+# poly = "nonuniform"
 # poly = "tri6"
 # poly = "quad"
 @timeit to "import data" begin
@@ -42,8 +42,8 @@ P = 1000
 # Ē = 3e6
 # ν̄  = 0.3
 E = 3e6
-ν = 0.3
-# ν = 0.5-1e-9
+# ν = 0.3
+ν = 0.5-1e-7
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 I = D^3/12
@@ -114,4 +114,4 @@ println(log10(𝐿₂))
 println(log10(𝐻ₑ))
 
 show(to)
-# end
+end

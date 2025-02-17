@@ -313,9 +313,18 @@ function import_HR_mix(filename1::String,filename2::String,n::Int)
 
     return elements, nodes, nodes_p,Ω
 end
-function import_plate_with_hole_mix(filename1::String,filename2::String,n,c)
+function import_HR_GLS(filename1::String,filename2::String,n,c)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
     gmsh.initialize()
+
+    gmsh.open(filename2)
+    entities = getPhysicalGroups()
+    nodes_c = get𝑿ᵢ()
+    
+
+    elements["Ω"] = getElements(nodes_c,entities["Ω"])
+    push!(elements["Ω"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    set∇𝝭!(elements["Ω"])
 
     gmsh.open(filename1)
     entities = getPhysicalGroups()
@@ -323,6 +332,7 @@ function import_plate_with_hole_mix(filename1::String,filename2::String,n,c)
     x = nodes.x
     y = nodes.y
     z = nodes.z
+    Ω = getElements(nodes, entities["Ω"])
     w = 0.0
     for i in 0:n-1
         w += c^i
@@ -350,34 +360,35 @@ function import_plate_with_hole_mix(filename1::String,filename2::String,n,c)
     type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
     # type = ReproducingKernel{:Cubic2D,:□,:CubicSpline}
     sp = RegularGrid(x,y,z,n = 3,γ = 5)
-    elements["Ω"] = getElements(nodes, entities["Ω"], type, integration_Ω, sp)
-    elements["∂Ω"] = getElements(nodes, entities["Γ"], type, integration_Γ, sp, normal = true)
-    elements["Ωᵍ"] = getElements(nodes, entities["Ω"], type, integrationOrder_Ωᵍ, sp)
-    elements["Γᵍ"] = getElements(nodes, entities["Γᵍ"],type, integration_Γ, sp, normal = true)
+    elements["Ωᵘ"] = getElements(nodes, entities["Ω"], type, integration_Ω, sp)
+    elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"], type, integration_Γ, sp, normal = true)
+    elements["Ωᵍᵘ"] = getElements(nodes, entities["Ω"], type, integrationOrder_Ωᵍ, sp)
+    elements["Γᵍᵘ"] = getElements(nodes, entities["Γᵍ"],type, integration_Γ, sp, normal = true)
     elements["Γᵗ"] = getElements(nodes, entities["Γᵗ"],type, integration_Γ, sp, normal = true)
 
-    nₘ = 21
+    nₘ = 60
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
-    push!(elements["Ω"], :𝝭)
-    push!(elements["∂Ω"], :𝝭)
-    push!(elements["Γᵍ"], :𝝭)
+    push!(elements["Ωᵘ"], :𝝭)
+    push!(elements["∂Ωᵘ"], :𝝭)
+    push!(elements["Γᵍᵘ"], :𝝭)
     push!(elements["Γᵗ"], :𝝭)
-    push!(elements["Ω"],  :𝗠=>𝗠)
-    push!(elements["∂Ω"], :𝗠=>𝗠)
-    push!(elements["Γᵍ"], :𝗠=>𝗠)
+    push!(elements["Ωᵘ"],  :𝗠=>𝗠)
+    push!(elements["∂Ωᵘ"], :𝗠=>𝗠)
+    push!(elements["Γᵍᵘ"], :𝗠=>𝗠)
     push!(elements["Γᵗ"], :𝗠=>𝗠)
-    push!(elements["Ωᵍ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["Ωᵍ"], :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Ωᵍᵘ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    push!(elements["Ωᵍᵘ"], :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
 
 
 
-    # type = PiecewisePolynomial{:Linear2D}
-    type = PiecewisePolynomial{:Quadratic2D}
-    println(entities)
-    elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integration_Ω)
-    elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integration_Γ)
+    types = PiecewisePolynomial{:Linear2D}
+    # types = PiecewisePolynomial{:Quadratic2D}
+    # types = PiecewisePolynomial{:Quadratic2D}
+   
+    elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integration_Ω)
+    elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integration_Γ)
     elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
     elements["Γᵗˢ"] = getElements(entities["Γᵗ"],entities["Γ"], elements["∂Ωˢ"])
     push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
@@ -385,7 +396,7 @@ function import_plate_with_hole_mix(filename1::String,filename2::String,n,c)
 
     # gmsh.finalize()
 
-    return elements, nodes, ds₂, ds₁
+    return elements, nodes, ds₂, ds₁, sp, type, Ω, nodes_c
 end
 function import_HR_mix_xyt(filename1::String,filename2::String,n,c)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()

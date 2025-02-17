@@ -129,15 +129,15 @@ function import_HR_GLS(filename1::String,filename2::String)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
     gmsh.initialize()
 
-    gmsh.open(filename1)
+    gmsh.open(filename2)
     entities = getPhysicalGroups()
     nodes_c = get𝑿ᵢ()
     elements["Ω"] = getElements(nodes_c,entities["Ω"])
     push!(elements["Ω"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
     set∇𝝭!(elements["Ω"])
 
-    # gmsh.open(filename1)
-    # entities = getPhysicalGroups()
+    gmsh.open(filename1)
+    entities = getPhysicalGroups()
     nodes = get𝑿ᵢ()
     
     x = nodes.x
@@ -145,13 +145,13 @@ function import_HR_GLS(filename1::String,filename2::String)
     z = nodes.z
     Ω = getElements(nodes, entities["Ω"])
     s, var𝐴 = cal_area_support(Ω)
-    sᵤ = 2.5*s*ones(length(nodes))
+    sᵤ = 2.8*s*ones(length(nodes))
   
     push!(nodes,:s₁=>sᵤ,:s₂=>sᵤ,:s₃=>sᵤ)
     
-    integrationOrder_Ω = 4
+    integrationOrder_Ω = 6
     integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 4
+    integrationOrder_Γ = 6
 
     gmsh.open(filename2)
     entities = getPhysicalGroups()
@@ -167,26 +167,30 @@ function import_HR_GLS(filename1::String,filename2::String)
     elements["Γᵍᵘ"] = getElements(nodes,entities["Γᵍ"], type, integrationOrder_Γ, sp, normal = true)
     
     
-    nₘ = 21
+    nₘ = 60
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
-    push!(elements["Ωᵘ"],:𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["Ωᵍᵘ"],:𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    ∂²𝗠∂x² = zeros(nₘ)
+    ∂²𝗠∂y² = zeros(nₘ)
+    ∂²𝗠∂x∂y = zeros(nₘ)
+
+    push!(elements["Ωᵘ"],:𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂²𝝭∂x², :∂²𝝭∂y², :∂²𝝭∂x∂y)
+    push!(elements["Ωᵍᵘ"],:𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂²𝝭∂x², :∂²𝝭∂y², :∂²𝝭∂x∂y)
     push!(elements["∂Ωᵘ"],:𝝭)
     push!(elements["Γᵗ"],:𝝭)
     # push!(elements["Γʳ"],:𝝭)
     push!(elements["Γᵍᵘ"],:𝝭)
 
-    push!(elements["Ωᵘ"],  :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
-    push!(elements["Ωᵍᵘ"], :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Ωᵘ"],  :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y, :∂²𝗠∂x²=>∂²𝗠∂x², :∂²𝗠∂y²=>∂²𝗠∂y², :∂²𝗠∂x∂y=>∂²𝗠∂x∂y )
+    push!(elements["Ωᵍᵘ"], :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y, :∂²𝗠∂x²=>∂²𝗠∂x², :∂²𝗠∂y²=>∂²𝗠∂y², :∂²𝗠∂x∂y=>∂²𝗠∂x∂y )
     push!(elements["∂Ωᵘ"],:𝗠=>𝗠)
     push!(elements["Γᵗ"],:𝗠=>𝗠)
     # push!(elements["Γʳ"],:𝗠=>𝗠)
     push!(elements["Γᵍᵘ"],:𝗠=>𝗠)
 
-    set∇𝝭!(elements["Ωᵘ"])
-    # set∇²𝝭!(elements["Ωᵘ"])
+    # set∇𝝭!(elements["Ωᵘ"])
+    set∇²𝝭!(elements["Ωᵘ"])
     set𝝭!(elements["∂Ωᵘ"])
     set∇𝝭!(elements["Ωᵍᵘ"])
     set𝝭!(elements["Γᵗ"])
@@ -196,21 +200,33 @@ function import_HR_GLS(filename1::String,filename2::String)
 
 
 
-
+    integrationOrder_Ωᵛ = 2
+    integrationOrder_Γᵛ = 2
     # gmsh.open(filename2)
     # types = PiecewisePolynomial{:Constant}
     types = PiecewisePolynomial{:Linear2D}
+    
     # types = PiecewisePolynomial{:Quadratic2D}
+    typess = PiecewisePolynomial{:Quadratic2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
     elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
+    elements["Ωˢᵛ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ωᵛ)
+    elements["∂Ωˢᵛ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γᵛ)
+    elements["Γᵍˢᵛ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢᵛ"])
+   
     
     push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂²𝝭∂x², :∂²𝝭∂y², :∂²𝝭∂x∂y)
+    push!(elements["Ωˢᵛ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂²𝝭∂x², :∂²𝝭∂y², :∂²𝝭∂x∂y)
     push!(elements["∂Ωˢ"], :𝝭)
+    push!(elements["∂Ωˢᵛ"], :𝝭)
 
     set∇𝝭!(elements["Ωˢ"])
+    set∇𝝭!(elements["Ωˢᵛ"])
+   
     # set∇²𝝭!(elements["Ωˢ"])
     set𝝭!(elements["∂Ωˢ"])
+    set𝝭!(elements["∂Ωˢᵛ"])
 
     return elements, nodes, sp, type, Ω, nodes_c
 end
@@ -387,9 +403,9 @@ function import_HR_GLS_MPP(filename1::String,filename2::String)
     # elements["∂Ωᵖ"] = getElements(nodes, entities["Γ"], type, integrationOrder_Γ, sp)
     # elements["Ωᵍᵖ"] = getElements(nodes, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
     # elements["Γᵍᵖ"] = getElements(nodes, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
-    typep = PiecewisePolynomial{:Constant}
+    # typep = PiecewisePolynomial{:Constant}
     # typep = PiecewisePolynomial{:Linear2D}
-    # typep = PiecewisePolynomial{:Quadratic2D}
+    typep = PiecewisePolynomial{:Quadratic2D}
     elements["Ωᵖ"] = getPiecewiseElements(entities["Ω"], typep, integrationOrder_Ω)
     elements["Ωᵍᵖ"] = getPiecewiseElements(entities["Ω"], typep, integrationOrder_Ω)
     elements["∂Ωᵖ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], typep, integrationOrder_Γ)

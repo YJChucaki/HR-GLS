@@ -44,7 +44,7 @@ function import_linear_mix(filename1::String,filename2::String)
     zᵖ = nodes_p.z
     Ω = getElements(nodes_p, entities["Ω"])
     s, var𝐴 = cal_area_support(Ω)
-    s = 2.5*s*ones(length(nodes_p))
+    s = 3.5*s*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
     integrationOrder_Ω = 3
@@ -151,10 +151,12 @@ function import_HR_GLS(filename1::String,filename2::String,n)
     s₂ = s*44.0/n*ones(length(nodes))
     push!(nodes,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
     
-    integrationOrder_Ω = 4
+    integrationOrder_Ω = 6
     integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 4
+    integrationOrder_Γ = 6
 
+    gmsh.open(filename2)
+    entities = getPhysicalGroups()
     # type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
     type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
     # type = ReproducingKernel{:Cubic2D,:□,:CubicSpline}
@@ -167,7 +169,7 @@ function import_HR_GLS(filename1::String,filename2::String,n)
     elements["Γᵍᵘ"] = getElements(nodes,entities["Γᵍ"], type, integrationOrder_Γ, sp, normal = true)
     
     
-    nₘ = 21
+    nₘ = 60
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
@@ -196,8 +198,8 @@ function import_HR_GLS(filename1::String,filename2::String,n)
 
     # gmsh.open(filename2)
     # types = PiecewisePolynomial{:Constant}
-    # types = PiecewisePolynomial{:Linear2D}
-    types = PiecewisePolynomial{:Quadratic2D}
+    types = PiecewisePolynomial{:Linear2D}
+    # types = PiecewisePolynomial{:Quadratic2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
     elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])

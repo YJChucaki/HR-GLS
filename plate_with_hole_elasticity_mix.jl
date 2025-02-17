@@ -202,6 +202,34 @@ println(log10(Hₑ_𝒖))
 println(log10(Hₑ_dev))
 println(log10(L₂_𝑝))
 
+
+pₑ = zeros(nₑ)
+for (i,elm) in enumerate(elements["Ωˢ"])
+    𝓒ₚ = elm.𝓒
+    𝓖 = elm.𝓖
+    𝓒 = elements["Ω"][i].𝓒
+    x = (𝓒[1].x+𝓒[2].x+𝓒[3].x)/3
+    x = (𝓒[1].x+𝓒[2].x+𝓒[3].x)/3
+    σ₁₁ = 𝓒ₚ[1].dₛ₁₁+𝓒ₚ[2].dₛ₁₁*𝓒[1].x+𝓒ₚ[3].dₛ₁₁*𝓒[1].y
+    σ₂₂ = 𝓒ₚ[1].dₛ₂₂+𝓒ₚ[2].dₛ₂₂*𝓒[1].x+𝓒ₚ[3].dₛ₂₂*𝓒[1].y
+    σ₃₃ = ν*(σ₁₁ + σ₂₂)
+    pₑ[i]= (σ₁₁ + σ₂₂ + σ₃₃)/3 
+end
+
+p_node = zeros(nᵤ)
+w = zeros(nᵤ)
+for (i,elm) in enumerate(elements["Ω"])
+    𝓒 = elm.𝓒
+     for (j,xⱼ) in enumerate(𝓒)
+        J = xⱼ.𝐼
+        p_node[J] +=pₑ[i]
+        w[J] +=1 
+     end
+end
+
+eval(VTK_HR_displacement_pressure)
+eval(VTK_HR_displacement_pressure_smoothing)
+
 # @timeit to "plot figure" begin
 # fig = Figure()
 # ind = 100

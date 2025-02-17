@@ -200,8 +200,8 @@ function import_patchtest_elasticity_mix(filename1::String,filename2::String)
     # elements["Γᵖ"] = elements["Γ¹ᵖ"]∪elements["Γ²ᵖ"]∪elements["Γ³ᵖ"]∪elements["Γ⁴ᵖ"]
 
     # type = PiecewisePolynomial{:Quadratic2D}
-    # typep = PiecewisePolynomial{:Linear2D}
-    typep = PiecewisePolynomial{:Constant}
+    typep = PiecewisePolynomial{:Linear2D}
+    # typep = PiecewisePolynomial{:Constant}
     elements["Ωᵖ"] = getPiecewiseElements(entities["Ω"], typep, integrationOrder_Ω)
     elements["∂Ωᵖ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], typep, integrationOrder_Γ)
     elements["Ωᵍᵖ"] =   getPiecewiseElements(entities["Ω"], typep, integrationOrder_Ω)
@@ -276,9 +276,9 @@ function import_patchtest_mix(filename1::String,filename2::String)
     s = 2.5*s*ones(length(nodes))
     push!(nodes,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integration_Ω = 4
+    integration_Ω = 7
     integrationOrder_Ωᵍ = 8
-    integration_Γ = 4
+    integration_Γ = 7
 
     gmsh.open(filename2)
     entities = getPhysicalGroups()
@@ -297,11 +297,13 @@ function import_patchtest_mix(filename1::String,filename2::String)
     elements["Γ"] = elements["Γ¹"]∪elements["Γ²"]∪elements["Γ³"]∪elements["Γ⁴"]
 
 
-    
-    nₘ = 21
+    nₘ = 60
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
+    ∂²𝗠∂x² = zeros(nₘ)
+    ∂²𝗠∂y² = zeros(nₘ)
+    ∂²𝗠∂x∂y = zeros(nₘ)
     # for elm in elements["Ω"]
     #     𝓒ₑ = elm.𝓒
     #     nc = length(𝓒ₑ)
@@ -325,20 +327,20 @@ function import_patchtest_mix(filename1::String,filename2::String)
     # end
 
 
-    push!(elements["Ω"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    push!(elements["Ω"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂²𝝭∂x², :∂²𝝭∂y², :∂²𝝭∂x∂y)
     push!(elements["∂Ω"], :𝝭)
     push!(elements["Γ¹"], :𝝭)
     push!(elements["Γ²"], :𝝭)
     push!(elements["Γ³"], :𝝭)
     push!(elements["Γ⁴"], :𝝭)
-    push!(elements["Ω"],  :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Ω"],  :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y, :∂²𝗠∂x²=>∂²𝗠∂x², :∂²𝗠∂y²=>∂²𝗠∂y², :∂²𝗠∂x∂y=>∂²𝗠∂x∂y)
     push!(elements["∂Ω"], :𝗠=>𝗠)
     push!(elements["Γ¹"], :𝗠=>𝗠)
     push!(elements["Γ²"], :𝗠=>𝗠)
     push!(elements["Γ³"], :𝗠=>𝗠)
     push!(elements["Γ⁴"], :𝗠=>𝗠)
-    push!(elements["Ωᵍ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["Ωᵍ"], :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Ωᵍ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂²𝝭∂x², :∂²𝝭∂y², :∂²𝝭∂x∂y)
+    push!(elements["Ωᵍ"], :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y, :∂²𝗠∂x²=>∂²𝗠∂x², :∂²𝗠∂y²=>∂²𝗠∂y², :∂²𝗠∂x∂y=>∂²𝗠∂x∂y)
 
 
     # type = PiecewisePolynomial{:Constant}

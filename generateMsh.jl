@@ -2,12 +2,14 @@
 using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
-# n = 4
-for n in 1:16
-filename = "cook_membrane_tri3_"
+n = 16
+# for n in 1:16
+filename = "cook_membrane_nouniform_"
 BenchmarkExample.CookMembrance.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1, quad=false, coef = 1.05)
-end
-
+# end
+# filename = "Punch_tri3_"
+# BenchmarkExample.Punch.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1)
+# 
 # filename = "patchtest_"
 # filename = "patchtest_tri6_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 2)
