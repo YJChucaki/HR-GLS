@@ -1,11 +1,11 @@
 using ApproxOperator,CairoMakie,Tensors, BenchmarkExample, Statistics
 import Gmsh: gmsh
-lwb = 1.0;lwm =2.0;mso=12;msx =4;ppu = 2.5;α = 0.7;
+lwb = 0.2;lwm =0.5;mso=1.5;msx =1;ppu = 2.5;α = 0.7;
 # filename1 = "./msh/cantilever_nonuniform_16.msh"
-filename1 = "./msh/cook_membrane_nouniform_4.msh"
+filename1 = "./msh/cook_membrane_nouniform_18.msh"
 # filename2 = "./msh/cantilever_bubble_4165.msh"
 # savename = "./png/cantilever_nonuniform_16.png"
-savename = "./png/cook_membrane_nouniform_4.png"
+savename = "./png/cook_membrane_nouniform_18.png"
 # filename1 = "./msh/plate_with_hole_45.msh"
 # filename2 = "./msh/plate_with_hole_2.msh"
 # savename = "./png/plate_with_hole_2_45.png"

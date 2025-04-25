@@ -1,0 +1,40 @@
+{
+	"folders": [
+		{
+			"path": "../ApproxOperator.jl"
+		},
+		{
+			"path": "../u-p-mix"
+		},
+		{
+			"path": "../BenchmarkExample.jl"
+		},
+		{
+			"path": "../incompressible"
+		},
+		{
+			"path": "../divergence_constraint"
+		},
+		{
+			"path": "../HR"
+		},
+		{
+			"path": "../JAVAtest"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../Gmsh.jl"
+		},
+		{
+			"path": "../WriteVTK.jl"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true,
+		 
+		"editor.indentSize": "tabSize"
+	}
+	
+}

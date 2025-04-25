@@ -14,8 +14,8 @@ ps = MKLPardisoSolver()
 # for i in 1:4
 # ndiv = n[i]
 # ndiv2 = n[i]
-ndiv = 2
-ndiv2 = 2
+ndiv = 8
+ndiv2 = 8
 poly = "tri3"
 test = "cantilever"
 # poly = "tri6"
@@ -39,8 +39,8 @@ P = 1000
 ℎ = 1.0
 
 Ē = 3e6
-# ν̄  = 0.3
-ν̄  = 0.5-1e-6
+ν̄  = 0.3
+# ν̄  = 0.5-1e-6
 # E = 3e6
 # ν = 0.3
 # ν = 0.5-1e-4

@@ -143,14 +143,15 @@ function import_HR_GLS(filename1::String,filename2::String,n)
     y = nodes.y
     z = nodes.z
     Ω = getElements(nodes, entities["Ω"])
-    # s, var𝐴 = cal_area_support(Ω)
-    # sᵤ = 1.5*s*ones(length(nodes))
+    s, var𝐴 = cal_area_support(Ω)
+    sᵤ = 2.8*s*ones(length(nodes))
 
-    s = 2.5
-    s₁ = s*44.0/n*ones(length(nodes))
-    s₂ = s*44.0/n*ones(length(nodes))
-    push!(nodes,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
-    
+    # s = 3.0
+    # s₁ = s*44.0/n*ones(length(nodes))
+    # s₂ = s*44.0/n*ones(length(nodes))
+    # push!(nodes,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
+    push!(nodes,:s₁=>sᵤ,:s₂=>sᵤ,:s₃=>sᵤ)
+
     integrationOrder_Ω = 6
     integrationOrder_Ωᵍ = 8
     integrationOrder_Γ = 6
@@ -235,7 +236,7 @@ function import_MF_Gauss(filename1::String,n)
     z = nodes.z
     Ω = getElements(nodes, entities["Ω"])
     
-    s = 2.5
+    s = 3.0
     s₁ = s*44.0/n*ones(length(nodes))
     s₂ = s*44.0/n*ones(length(nodes))
     push!(nodes,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)

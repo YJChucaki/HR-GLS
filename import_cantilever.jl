@@ -145,13 +145,13 @@ function import_HR_GLS(filename1::String,filename2::String)
     z = nodes.z
     Ω = getElements(nodes, entities["Ω"])
     s, var𝐴 = cal_area_support(Ω)
-    sᵤ = 2.8*s*ones(length(nodes))
+    sᵤ = 2.5*s*ones(length(nodes))
   
     push!(nodes,:s₁=>sᵤ,:s₂=>sᵤ,:s₃=>sᵤ)
     
-    integrationOrder_Ω = 6
+    integrationOrder_Ω = 4
     integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 6
+    integrationOrder_Γ = 4
 
     gmsh.open(filename2)
     entities = getPhysicalGroups()
@@ -209,6 +209,7 @@ function import_HR_GLS(filename1::String,filename2::String)
     # types = PiecewisePolynomial{:Quadratic2D}
     typess = PiecewisePolynomial{:Quadratic2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
+    # elements["∂Ωˢ"] = getPiecewiseElements(entities["Γ"], types, integrationOrder_Γ)
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
     elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
     elements["Ωˢᵛ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ωᵛ)
@@ -239,6 +240,11 @@ function import_MF_Gauss(filename1::String)
     entities = getPhysicalGroups()
     nodes = get𝑿ᵢ()
     
+    nodes_c = get𝑿ᵢ()
+    elements["ΩC"] = getElements(nodes_c,entities["Ω"])
+    push!(elements["ΩC"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    set∇𝝭!(elements["ΩC"])
+
     x = nodes.x
     y = nodes.y
     z = nodes.z
@@ -282,7 +288,7 @@ function import_MF_Gauss(filename1::String)
 
 
 
-    return elements, nodes
+    return elements, nodes, sp, type, nodes_c
 end
 function import_HR_GLS_MPP(filename1::String,filename2::String)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()

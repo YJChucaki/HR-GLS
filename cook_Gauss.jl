@@ -10,8 +10,8 @@ include("import_cook.jl")
 
 const to = TimerOutput()
 # ps = MKLPardisoSolver()
-nn = [ 4 8 12 16 ]
-for i in 1:4
+nn = [ 4 8 12 16 20 24]
+for i in 5:6
 ndiv = nn[i]
 ndiv2 = nn[i]
 n = nn[i]
@@ -45,7 +45,7 @@ P = 6.25
 # ν̄  = 0.3
 E = 70
 # ν = 0.3
-ν = 0.5-1e-8
+ν = 0.5-1e-5
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 I = D^3/12

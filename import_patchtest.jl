@@ -29,7 +29,73 @@ function import_patchtest_fem(filename::String)
 
     return elements, nodes
 end
+function import_patchtest_MF(filename::String)
+    elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
+    gmsh.initialize()
 
+    gmsh.open(filename)
+    entities = getPhysicalGroups()
+    nodes = get𝑿ᵢ()
+
+    nodes_c = get𝑿ᵢ()
+    elements["ΩC"] = getElements(nodes_c,entities["Ω"])
+    push!(elements["ΩC"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    set∇𝝭!(elements["ΩC"])
+
+
+    x = nodes.x
+    y = nodes.y
+    z = nodes.z
+    Ω = getElements(nodes, entities["Ω"])
+    s, var𝐴 = cal_area_support(Ω)
+    sᵤ = 2.5*s*ones(length(nodes))
+
+    push!(nodes,:s₁=>sᵤ,:s₂=>sᵤ,:s₃=>sᵤ)
+
+    integrationOrder_Ω = 7
+    integrationOrder_Ωᵍ = 8
+    integrationOrder_Γ = 7
+    
+    # type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
+    type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
+    # type = ReproducingKernel{:Cubic2D,:□,:CubicSpline}
+    sp = RegularGrid(x,y,z,n = 3,γ = 5)
+
+    elements["Ωᵍ"] = getElements(nodes,entities["Ω"], type,  integrationOrder_Ω, sp)
+    elements["Ω"] = getElements(nodes,entities["Ω"], type,  integrationOrder_Ω, sp)
+    elements["Γ¹"] = getElements(nodes,entities["Γ¹"], type, integrationOrder_Γ, sp, normal = true)
+    elements["Γ²"] = getElements(nodes,entities["Γ²"], type, integrationOrder_Γ, sp, normal = true)
+    elements["Γ³"] = getElements(nodes,entities["Γ³"], type, integrationOrder_Γ, sp, normal = true)
+    elements["Γ⁴"] = getElements(nodes,entities["Γ⁴"], type, integrationOrder_Γ, sp, normal = true)
+
+    nₘ = 21
+    𝗠 = zeros(nₘ)
+    ∂𝗠∂x = zeros(nₘ)
+    ∂𝗠∂y = zeros(nₘ)
+    push!(elements["Ω"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    push!(elements["Ωᵍ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    push!(elements["Γ¹"],:𝝭)
+    push!(elements["Γ²"],:𝝭)
+    push!(elements["Γ³"],:𝝭)
+    push!(elements["Γ⁴"],:𝝭)
+
+
+    push!(elements["Ω"], :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Ωᵍ"], :𝗠=>𝗠,:∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Γ¹"],:𝗠=>𝗠)
+    push!(elements["Γ²"],:𝗠=>𝗠)
+    push!(elements["Γ³"],:𝗠=>𝗠)
+    push!(elements["Γ⁴"],:𝗠=>𝗠)
+
+    gmsh.finalize()
+
+    elements["Γ"] = elements["Γ¹"]∪elements["Γ²"]∪elements["Γ³"]∪elements["Γ⁴"]
+    set∇𝝭!(elements["Ω"])
+    set∇𝝭!(elements["Ωᵍ"])
+    set𝝭!(elements["Γ"])
+
+    return elements, nodes, sp, type, nodes_c
+end
 
 function import_patchtest_elasticity_penalty(filename1::String,filename2::String)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
@@ -43,12 +109,12 @@ function import_patchtest_elasticity_penalty(filename1::String,filename2::String
     zᵖ = nodes_p.z
     Ω = getElements(nodes_p, entities["Ω"])
     s, var𝐴 = cal_area_support(Ω)
-    s = 1.5*s*ones(length(nodes_p))
+    s = 2.5*s*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integrationOrder_Ω = 2
+    integrationOrder_Ω = 6
     integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 2
+    integrationOrder_Γ = 6
 
     gmsh.open(filename1)
     entities = getPhysicalGroups()
@@ -347,15 +413,23 @@ function import_patchtest_mix(filename1::String,filename2::String)
     type = PiecewisePolynomial{:Linear2D}
     # type = PiecewisePolynomial{:Quadratic2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integration_Ω)
+    
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integration_Γ)
+    elements["∂Ωˢˢ"] = getPiecewiseElements(entities["Γ"], type, integration_Γ)
     elements["Γ¹ˢ"] = getElements(entities["Γ¹"],entities["Γ"], elements["∂Ωˢ"])
     elements["Γ²ˢ"] = getElements(entities["Γ²"],entities["Γ"], elements["∂Ωˢ"])
     elements["Γ³ˢ"] = getElements(entities["Γ³"],entities["Γ"], elements["∂Ωˢ"])
     elements["Γ⁴ˢ"] = getElements(entities["Γ⁴"],entities["Γ"], elements["∂Ωˢ"])
+
+    # elements["∂Ωˢ"] = getPiecewiseElements(entities["Γ"], type, integration_Γ)
+    # elements["Γ¹ˢ"] = getPiecewiseElements(entities["Γ¹"], type, integration_Γ)
+    # elements["Γ²ˢ"] = getPiecewiseElements(entities["Γ²"], type, integration_Γ)
+    # elements["Γ³ˢ"] = getPiecewiseElements(entities["Γ³"], type, integration_Γ)
+    # elements["Γ⁴ˢ"] = getPiecewiseElements(entities["Γ⁴"], type, integration_Γ)
     elements["Γˢ"] = elements["Γ¹ˢ"]∪elements["Γ²ˢ"]∪elements["Γ³ˢ"]∪elements["Γ⁴ˢ"]
     push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
     push!(elements["∂Ωˢ"], :𝝭)
-
+    push!(elements["∂Ωˢˢ"], :𝝭)
     # gmsh.finalize()
 
     return elements, nodes

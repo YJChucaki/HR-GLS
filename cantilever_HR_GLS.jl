@@ -3,19 +3,19 @@ using TimerOutputs
 using SparseArrays, Pardiso, Printf, LinearAlgebra
 using CairoMakie, WriteVTK
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric,∫∫σᵢⱼσₖₗdxdy_PlaneStrian,∫∫σᵢⱼσₖₗdxdy,∫σᵢⱼnⱼuᵢds,∫∫∇σᵢⱼuᵢdxdy,∫σᵢⱼnⱼgᵢds,∫∫τ∇σᵢⱼ∇σᵢₖdxdy,∫∫τ∇σᵢⱼ∇σᵢₖdxdy_new,∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Taylor,∫∫σᵢⱼσₖₗdxdy_Taylor, Hₑ_PlaneStrain_Dil, 𝐿₂_PlaneStrain_Pressure, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric,∫∫σᵢⱼσₖₗdxdy_PlaneStrian,∫∫σᵢⱼσₖₗdxdy,∫σᵢⱼnⱼuᵢds,∫∫∇σᵢⱼuᵢdxdy,∫σᵢⱼnⱼgᵢds,∫∫τ∇σᵢⱼ∇σᵢₖdxdy,∫∫τ∇σᵢⱼ∇σᵢₖdxdy_new,∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Taylor,∫∫σᵢⱼσₖₗdxdy_Taylor, Hₑ_PlaneStrain_Dil, 𝐿₂_PlaneStrain_Pressure, Hₑ_PlaneStrain_Deviatoric,∫∫τ∇εᵢⱼ∇σᵢₖdxdy
 
 include("import_cantilever.jl")
 include("wirteVTK.jl")
 
 const to = TimerOutput()
 ps = MKLPardisoSolver()
-# n = [ 2 4 8 16 ]
-# for i in 1:4
-# ndiv = n[i]
-# ndiv2 = n[i]
-ndiv = 8
-ndiv2 = 8
+n = [  4 8 16 32]
+for i in 1:4
+ndiv = n[i]
+ndiv2 = n[i]
+# ndiv = 32
+# ndiv2 = 32
 poly = "tri3"
 test = "cantilever"
 # poly = "tri6"
@@ -39,8 +39,8 @@ P = 1000
 ℎ = 1.0
 
 Ē = 3e6
-# ν̄  = 0.3
-ν̄  = 0.5-1e-5
+ν̄  = 0.3
+# ν̄  = 0.5-1e-7
 # E = 3e6
 # ν = 0.3
 # ν = 0.5-1e-4
@@ -71,7 +71,7 @@ v(x,y) = P/6/EI*(3*ν*y^2*(L-x) + (4+5*ν)*D^2*x/4 + (3*L-x)*x^2)
 σ₁₂(x,y) = P/2/I*(D^2/4-y^2)
 p(x,y) = (σ₁₁(x,y)+σ₂₂(x,y)+σ₃₃(x,y))/3
 
-β =1*ℎ^2/2/𝐺
+β =0.1*ℎ^2/2/𝐺
 # β =1/2/𝐺
 prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->β)
 prescribe!(elements["Ωˢ"],:ℎ=>(x,y,z)->ℎ) 
@@ -116,15 +116,22 @@ prescribe!(elements["Ωˢ"],:p=>(x,y,z)->p(x,y))
 # 𝑏ᵅ = ∫σᵢⱼnⱼgᵢds_Taylor=>(elements["Γᵍˢ"],elements["Γᵍᵘ"])
 
 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy=>elements["Ωˢ"]
+
 # 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_new=>elements["Ωˢ"]
 # 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Taylor=>elements["Ωˢ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
 
-kˢˢ = zeros(3*nₛ*nₑₛ,3*nₛ*nₑₛ)
-kˢᵘ = zeros(3*nₛ*nₑₛ,2*nᵤ)
-kˢᵘⁿ  = zeros(3*nₛ*nₑₛ,2*nᵤ)
+kˢˢ = spzeros(3*nₛ*nₑₛ,3*nₛ*nₑₛ)
+kˢᵘ = spzeros(3*nₛ*nₑₛ,2*nᵤ)
+kˢᵘⁿ  = spzeros(3*nₛ*nₑₛ,2*nᵤ)
 fˢ = zeros(3*nₛ*nₑₛ)
 fᵘ = zeros(2*nᵤ)
+
+# kˢˢ = zeros(3*nₛ*nₑₛ,3*nₛ*nₑₛ)
+# kˢᵘ = zeros(3*nₛ*nₑₛ,2*nᵤ)
+# kˢᵘⁿ  = zeros(3*nₛ*nₑₛ,2*nᵤ)
+# fˢ = zeros(3*nₛ*nₑₛ)
+# fᵘ = zeros(2*nᵤ)
 
 
 
@@ -133,12 +140,16 @@ fᵘ = zeros(2*nᵤ)
     𝑎(kˢˢ)
     𝑏(kˢᵘ)
     𝑏ᵅ(kˢᵘ,fˢ)
-    𝑏ᵝ(kˢˢ,fˢ)
+    # 𝑏ᵝ(kˢˢ,fˢ)
+  
     𝑓(fᵘ)
 end
     
  # @timeit to "solve" pardiso(ps,d,k,f)
-    d = [kˢˢ kˢᵘ;kˢᵘ' zeros(2*nᵤ,2*nᵤ)]\[fˢ;-fᵘ]
+    k = sparse([kˢˢ kˢᵘ;kˢᵘ' zeros(2*nᵤ,2*nᵤ)])
+    f = [fˢ;-fᵘ]
+    d = k\f
+    # d = [kˢˢ kˢᵘ;kˢᵘ' zeros(2*nᵤ,2*nᵤ)]\[fˢ;-fᵘ]
     d₁ = d[3*nₛ*nₑ+1:2:end]
     d₂ = d[3*nₛ*nₑ+2:2:end]
     dₛ₁₁ = d[1:3:3*nₛ*nₑₛ]
@@ -170,7 +181,7 @@ println(log10(Hₑ_dil))
 println(log10(L₂_𝑝))
 # println(log10(L₂_stress))
 
-
+# element pressure
 pₑ = zeros(nₑ)
 for (i,elm) in enumerate(elements["Ωˢ"])
     𝓒ₚ = elm.𝓒
@@ -231,8 +242,8 @@ for elm in elements["Ω"]
     push!(𝓒ₚ,:pc=>pc)
 end
 
-eval(VTK_HR_displacement_pressure)
-eval(VTK_HR_displacement_pressure_smoothing)
+# eval(VTK_HR_displacement_pressure)
+# eval(VTK_HR_displacement_pressure_smoothing)
 # eval(VTK_exact_pressure)
 
 
@@ -293,7 +304,9 @@ cells = [MeshCell(VTKCellTypes.VTK_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) fo
 # # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
 vtk_grid("./vtk/cantilever_GLS_"*poly*"_"*string(ndiv)*"_"*string(ndiv),points,cells) do vtk
     vtk["𝑝"] = colors
+    vtk["p_element"] = pₑ
+    vtk["p_node"] = pc
 end
 show(to)
 # fig
-# end
+end

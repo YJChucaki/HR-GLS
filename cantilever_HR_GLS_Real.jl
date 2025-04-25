@@ -14,8 +14,8 @@ ps = MKLPardisoSolver()
 # for i in 1:4
 # ndiv = n[i]
 # ndiv2 = n[i]
-ndiv = 8
-ndiv2 = 8
+ndiv = 4
+ndiv2 = 4
 poly = "tri3"
 test = "cantilever"
 # poly = "tri6"
@@ -39,8 +39,8 @@ P = 1000
 # ℎ = 1.0
 
 Ē = 3e6
-ν̄  = 0.3
-# ν̄  = 0.5-1e-4
+# ν̄  = 0.3
+ν̄  = 0.5-1e-6
 # E = 3e6
 # ν = 0.3
 # ν = 0.5-1e-4
@@ -71,7 +71,7 @@ v(x,y) = P/6/EI*(3*ν*y^2*(L-x) + (4+5*ν)*D^2*x/4 + (3*L-x)*x^2)
 σ₁₂(x,y) = P/2/I*(D^2/4-y^2)
 p(x,y) = (σ₁₁(x,y)+σ₂₂(x,y)+σ₃₃(x,y))/3
 
-β =1*ℎ^2/2/𝐺
+β =0.1*ℎ^2/2/𝐺
 # β =1*ℎ^2
 prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->β)
 prescribe!(elements["Ωˢ"],:ℎ=>(x,y,z)->ℎ) 
@@ -112,21 +112,18 @@ prescribe!(elements["Ωˢ"],:p=>(x,y,z)->p(x,y))
 prescribe!(elements["Ωˢ"],:p=>(x,y,z)->p(x,y))
 
 𝑎 =∫∫σᵢⱼσₖₗdxdy=>elements["Ωˢ"]
-# 𝑎 =∫∫σᵢⱼσₖₗdxdy_Taylor=>elements["Ωˢ"]
+
 𝑏 = [
     ∫σᵢⱼnⱼuᵢds=>(elements["∂Ωˢ"],elements["∂Ωᵘ"]),
     ∫∫∇σᵢⱼuᵢdxdy=>(elements["Ωˢ"],elements["Ωᵘ"]),
-    # ∫σᵢⱼnⱼuᵢds_Taylor=>(elements["∂Ωˢ"],elements["∂Ωᵘ"]),
-    # ∫∫∇σᵢⱼuᵢdxdy_Taylor=>(elements["Ωˢ"],elements["Ωᵘ"]),
+ 
     ]
 
 𝑏ᵅ = ∫σᵢⱼnⱼgᵢds=>(elements["Γᵍˢ"],elements["Γᵍᵘ"])
-# 𝑏ᵅ = ∫σᵢⱼnⱼgᵢds_Taylor=>(elements["Γᵍˢ"],elements["Γᵍᵘ"])
-# c = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Real=>elements["Ωᵘ"]
+
 c = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Real=>elements["Ωᵘ"]
 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy=>elements["Ωˢ"]
-# 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_new=>elements["Ωˢ"]
-# 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Taylor=>elements["Ωˢ"]
+
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
 
 kˢˢ = zeros(3*nₛ*nₑₛ,3*nₛ*nₑₛ)
@@ -144,7 +141,7 @@ fᵘ = zeros(2*nᵤ)
     𝑏(kˢᵘ)
     𝑏ᵅ(kˢᵘ,fˢ)
     c(kᵘᵘ,fᵘ)
-    # 𝑏ᵝ(kˢˢ,fˢ)
+    𝑏ᵝ(kˢˢ,fˢ)
     𝑓(fᵘ)
 end
     

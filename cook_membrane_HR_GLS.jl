@@ -10,17 +10,18 @@ include("wirteVTK.jl")
 
 const to = TimerOutput()
 ps = MKLPardisoSolver()
-# nn = [ 4 8 12 16 ]
-# for i in 1:4
-# ndiv = nn[i]
-# ndiv2 = nn[i]
-# n = nn[i]
-ndiv = 8
-ndiv2 = 8
-n = 8
-poly = "tri3"
+nn = [ 2 4 8 16 ]
+for i in 4:4
+ndiv = nn[i]
+ndiv2 = nn[i]
+n = nn[i]
+
+# ndiv = 18
+# ndiv2 = 18
+# n = 18
+# poly = "tri3"
 test = "cook"
-# poly = "nouniform"
+poly = "nouniform"
 # poly = "tri6"
 # poly = "quad"
 @timeit to "import data" begin
@@ -28,7 +29,7 @@ test = "cook"
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*poly*"_"*string(ndiv2)*".msh")
 # elements, nodes, sp, type, Ω, nodes_c= import_HR_GLS("./msh/cook_"*poly*"_"*string(ndiv)*".msh","./msh/cook_"*poly*"_"*string(ndiv2)*".msh",n)
 # elements, nodes,  sp, type = import_HR_GLS_reduced("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*poly*"_"*string(ndiv2)*".msh")
-# elements, nodes, sp, type = import_HR_GLS("./msh/cantilever_nonuniform_"*string(ndiv)*".msh","./msh/cantilever_nonuniform_"*string(ndiv2)*".msh")
+# elements, nodes, sp, type, Ω, nodes_c = import_HR_GLS("./msh/cook_membrane_nonuniform_"*string(ndiv)*".msh","./msh/cook_membrane_nonuniform_"*string(ndiv2)*".msh",n)
 elements, nodes, sp, type, Ω, nodes_c= import_HR_GLS("./msh/cook_membrane_"*poly*"_"*string(ndiv)*".msh","./msh/cook_membrane_"*poly*"_"*string(ndiv2)*".msh",n)
 end
 nc = length(nodes_c)
@@ -48,8 +49,8 @@ P = 6.25
 # ν̄  = 0.3
 E = 70.0
 # ν = 0.3 
-# ν = 0.5-1e-4
-ν = 0.499
+# ν = 0.5-1e-6
+ν = 0.49999
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 I = D^3/12
@@ -77,7 +78,7 @@ for (i,elm) in enumerate(elements["Ω"])
      for (j,xⱼ) in enumerate(𝓒ₚ)
         J = xⱼ.𝐼
         ℎ[J] =hₑ
-        β[J] =10*hₑ^2/2/𝐺
+        β[J] =0.1*hₑ^2/2/𝐺
      end
 end
 for elm in elements["Ωˢ"]
@@ -87,7 +88,7 @@ for elm in elements["Ωˢ"]
 end
 
 
-# β =1*ℎ^2/2/𝐺
+# β =0.1*ℎ^2/2/𝐺
 # prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->β)
 # prescribe!(elements["Ωˢ"],:ℎ=>(x,y,z)->ℎ) 
 prescribe!(elements["Ωˢ"],:E=>(x,y,z)->E)
@@ -149,7 +150,7 @@ fᵘ = zeros(2*nᵤ)
     𝑎(kˢˢ)
     𝑏(kˢᵘ)
     𝑏ᵅ(kˢᵘ,fˢ)
-    𝑏ᵝ(kˢˢ,fˢ)
+    # 𝑏ᵝ(kˢˢ,fˢ)
     𝑓(fᵘ)
     end
     
@@ -210,8 +211,30 @@ fᵘ = zeros(2*nᵤ)
          end
     end
     
-    eval(VTK_HR_displacement_pressure)
-    eval(VTK_HR_displacement_pressure_smoothing)
+pc = zeros(nc)
+for (i,elm) in enumerate(elements["Ω"])
+    𝓒 = elm.𝓒
+     for (j,xⱼ) in enumerate(𝓒)
+        J = xⱼ.𝐼
+        ξ¹ = xⱼ.x
+        ξ² = xⱼ.y
+        ∂ū₁∂x = -P/EI*(L-ξ¹)*ξ²
+        ∂ū₁∂y = -P/6/EI*((6*L-3*ξ¹)*ξ¹ + (2+ν )*(3*ξ²^2-D^2/4))
+        ∂ū₂∂x = P/6/EI*((6*L-3*ξ¹)*ξ¹ - 3*ν *ξ²^2 + (4+5*ν )*D^2/4)
+        ∂ū₂∂y = P/EI*(L-ξ¹)*ξ²*ν 
+        ε̄₁₁ = ∂ū₁∂x
+        ε̄₂₂ = ∂ū₂∂y
+        pc[J] = K*(ε̄₁₁+ε̄₂₂)
+        
+     end
+end
+
+for elm in elements["Ω"]
+    𝓒ₚ = elm.𝓒
+    push!(𝓒ₚ,:pc=>pc)
+end
+    # eval(VTK_HR_displacement_pressure)
+    # eval(VTK_HR_displacement_pressure_smoothing)
     # eval(VTK_HR_displacement_pressure_sigma11)
 
 
@@ -264,6 +287,8 @@ for (i,node_c) in enumerate(nodes_c)
     colors[i] = p
 end
 
+
+
 # fig = Figure(figure_padding = 1,size = (400,600))
 # ind = 100
 # ax = Axis(fig[1,1], 
@@ -286,67 +311,20 @@ end
 
 
 
-# # points = [[node.x+α*node.d₁ for node in nodes]';[node.y+α*node.d₂ for node in nodes]';zeros(1,nᵤ)]
-# points = [x';y';zeros(1,nc)]
-# cells = [MeshCell(VTKCellTypes.VTK_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ω"]]
-# # # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-# # # cells = [MeshCell(VTKCellTypes.VTK_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-# # # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-# vtk_grid("./vtk/cook_GLS_"*poly*"_"*string(ndiv)*"_"*string(ndiv)*"_"*string(β),points,cells) do vtk
-#     vtk["𝑝"] = colors
-# end
+# points = [[node.x+α*node.d₁ for node in nodes]';[node.y+α*node.d₂ for node in nodes]';zeros(1,nᵤ)]
+points = [x';y';zeros(1,nc)]
+cells = [MeshCell(VTKCellTypes.VTK_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ω"]]
+# # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# # cells = [MeshCell(VTKCellTypes.VTK_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# # cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+vtk_grid("./vtk/cook_GLS_"*poly*"_"*string(ndiv)*"_"*string(ndiv),points,cells) do vtk
+    vtk["𝑝"] = colors
+    vtk["p_element"] = pₑ
+    vtk["p_node"] = pc
+end
 
 println(y[3] - nodes_c[3].y)
-# @timeit to "plot figure" begin
-# fig = Figure()
-# ind = 100
-# ax = Axis(fig[1,1], 
-#     aspect = DataAspect(), 
-#     xticksvisible = false,
-#     xticklabelsvisible=false, 
-#     yticksvisible = false, 
-#     yticklabelsvisible=false,
-# )
-# hidespines!(ax)
-# hidedecorations!(ax)
-# xs = LinRange(0, 48, 4*ind)
-# ys = LinRange(-6, 6, ind)
-# zs = zeros(4*ind,ind)
-# 𝗠 = zeros(6)
-# for (i,x) in enumerate(xs)
-#     for (j,y) in enumerate(ys)
-#         indices = sp(x,y,0.0)
-#         ni = length(indices)
-#         𝓒 = [nodes[i] for i in indices]
-#         data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:∂𝝭∂x=>(4,zeros(ni)),:∂𝝭∂y=>(4,zeros(ni)),:𝗠=>(0,𝗠),:∂𝗠∂x=>(0,𝗠),:∂𝗠∂y=>(0,𝗠)])
-#         ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-#         𝓖 = [ξ]
-#         a = type(𝓒,𝓖)
-#         # set𝝭!(a)
-#         set∇𝝭!(a)
-#         d₁ = 0.0
-#         d₂ = 0.0
-#         B₁ = ξ[:∂𝝭∂x]
-#         B₂ = ξ[:∂𝝭∂y]
-#         ε₁₁ = 0.0
-#         ε₂₂ = 0.0
-#         ε₁₂ = 0.0
-#         for (k,xₖ) in enumerate(𝓒)
-#             ε₁₁ += B₁[k]*xₖ.d₁
-#             ε₂₂ += B₂[k]*xₖ.d₂
-#             ε₁₂ += B₁[k]*xₖ.d₂ + B₂[k]*xₖ.d₁
-#         end
-#         p=K*(ε₁₁+ε₂₂)
-#         zs[i,j] = p
-#     end
-# end
 
-# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
-# # Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
-# save("./png/cantilever_mix_tri3_"*string(ndiv)*"_"*string(ndiv)*"_ls.png",fig, px_per_unit = 10.0)
-# # end
-# fig
 show(to)
 
-# end
+end

@@ -1,31 +1,55 @@
 
 using BenchmarkExample
 import Gmsh: gmsh
-using BubbleMsh
-n = 16
+using BubbleMsh, Printf
+
+# for n in 2:6
+# n=2
+# filename = "PatchTest3D_tet4_"
+# BenchmarkExample.PatchTest3D.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1, quad=false)
+# end
+# n = 2
 # for n in 1:16
-filename = "cook_membrane_nouniform_"
-BenchmarkExample.CookMembrance.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1, quad=false, coef = 1.05)
+# n=2
+# filename = "cook_membrane_nouniform_"
+# BenchmarkExample.CookMembrance.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1, quad=false, coef = 1.05)
 # end
 # filename = "Punch_tri3_"
 # BenchmarkExample.Punch.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1)
+
+# for n in 18:24
+# # n=18
+# filename = "cook_membrane_tri3_"
+# BenchmarkExample.CookMembrance.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1, quad=false, coef = 1.05)
+# end
+
+# for n in 3:8
+# n=0
+# filename = "block_tet4_"
+# BenchmarkExample.Block.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1)
+# end
+# n=2
+# filename = "block_nonuniform_"
+# BenchmarkExample.Block.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1)
 # 
 # filename = "patchtest_"
 # filename = "patchtest_tri6_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 2)
-
+n=4
+filename = "patchtest_nonuniform_"
+BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1)
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
-# filename = "patchtest_quad_"
-# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
-# for n in 2:32
-# filename = "cantilever_tri6_"
-# BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=2)
+# for n in 21:31
+# n=32
+# filename = "cantilever_tri3_"
+# BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 # end
+
 # filename = "cantilever_nonuniform_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order=1)
 
-# for n in 4:16
+# for n in 60:64
 #     filename = "square_tri3_"
 #     BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 # end

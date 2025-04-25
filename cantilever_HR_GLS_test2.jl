@@ -14,8 +14,8 @@ ps = MKLPardisoSolver()
 # for i in 1:4
 # ndiv = n[i]
 # ndiv2 = n[i]
-ndiv = 2
-ndiv2 = 2
+ndiv = 16
+ndiv2 = 16
 poly = "tri3"
 test = "cantilever"
 # poly = "tri6"
@@ -39,8 +39,8 @@ P = 1000
 ℎ = 1.0
 
 Ē = 3e6
-# ν̄  = 0.3
-ν̄  = 0.5-1e-6
+ν̄  = 0.3
+# ν̄  = 0.5-1e-6
 # E = 3e6
 # ν = 0.3
 # ν = 0.5-1e-4
@@ -147,13 +147,13 @@ fᵘ = zeros(2*nᵤ)
 
 @timeit to "assembly" begin
 
-    # 𝑎(kˢˢ)
+    𝑎(kˢˢ)
     # 𝑎b(kˢˢ)
-    𝑎vT(kˢˢ)
-    𝑎d(kˢˢ)
+    # 𝑎vT(kˢˢ)
+    # 𝑎d(kˢˢ)
     # 𝑎v(kˢˢ)
     𝑏(kˢᵘ)
-    # 𝑏E(kˢᵘ)
+   
     𝑏ᵅ(kˢᵘ,fˢ)
     # 𝑏ᵝ(kˢˢ,fˢ)
     𝑓(fᵘ)

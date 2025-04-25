@@ -4,32 +4,32 @@ using ApproxOperator.Elasticity:  ∫∫σᵢⱼσₖₗdxdy, ∫∫∇σᵢⱼu
 
 include("import_patchtest.jl")
 
-# nₚ = 49
-ndivs = 8
-ndiv = 8
+# nₚ = 4
+ndivs =10
+ndiv = 10
 # elements, nodes = import_patchtest_mix("msh/patchtest_u_"*string(nₚ)*".msh","./msh/patchtest_"*string(ndiv)*".msh");
-elements, nodes = import_patchtest_mix("msh/patchtest_"*string(ndivs)*".msh","./msh/patchtest_"*string(ndiv)*".msh");
-# elements, nodes = import_patchtest_mix("msh/patchtest_uniform_"*string(ndivs)*".msh","./msh/patchtest_uniform_"*string(ndiv)*".msh");
+# elements, nodes = import_patchtest_mix("msh/patchtest_"*string(ndivs)*".msh","./msh/patchtest_"*string(ndiv)*".msh");
+elements, nodes = import_patchtest_mix("msh/patchtest_nonuniform_"*string(ndivs)*".msh","./msh/patchtest_nonuniform_"*string(ndiv)*".msh");
 nₛ = 3
 nₚ = length(nodes)
 nₑ = length(elements["Ω"])
 
 Ē = 1.0
 ν̄  = 0.3
-# ν̄  = 0.4999999
+# ν̄  = 0.499999
 E = Ē/(1.0-ν̄ ^2)
 ν = ν̄ /(1.0-ν̄ )
 ℎ = 1.0/ndiv
-𝐺 = E/(1+ν)/2
-β =1*ℎ^2/2/𝐺
-# β =1*ℎ^2/2
+𝐺 = Ē/(1+ν̄ )/2
+β =0.1*ℎ^2/2/𝐺
+
 set∇²𝝭!(elements["Ω"])
 set𝝭!(elements["∂Ω"])
 set∇𝝭!(elements["Ωᵍ"])
 set𝝭!(elements["Γ"])
 set∇𝝭!(elements["Ωˢ"])
 set𝝭!(elements["∂Ωˢ"])
-
+# set𝝭!(elements["∂Ωˢˢ"])
 n = 2
 # u(x,y) = (1+2*x+3*y)^n
 # v(x,y) = (4+5*x+6*y)^n
@@ -44,18 +44,18 @@ n = 2
 # ∂²v∂x∂y(x,y) = 30*n*(n-1)*(4+5*x+6*y)^abs(n-2)
 # ∂²v∂y²(x,y)  = 36*n*(n-1)*(4+5*x+6*y)^abs(n-2)
 
-u(x,y) = (x+y)^n
-v(x,y) = -(x+y)^n
-∂u∂x(x,y) = n*(x+y)^abs(n-1)
-∂u∂y(x,y) = n*(x+y)^abs(n-1)
-∂v∂x(x,y) = -n*(x+y)^abs(n-1)
-∂v∂y(x,y) =- n*(x+y)^abs(n-1)
-∂²u∂x²(x,y)  = n*(n-1)*(x+y)^abs(n-2)
-∂²u∂x∂y(x,y) = n*(n-1)*(x+y)^abs(n-2)
-∂²u∂y²(x,y)  = n*(n-1)*(x+y)^abs(n-2)
-∂²v∂x²(x,y)  = -n*(n-1)*(x+y)^abs(n-2)
-∂²v∂x∂y(x,y) = -n*(n-1)*(x+y)^abs(n-2)
-∂²v∂y²(x,y)  = -n*(n-1)*(x+y)^abs(n-2)
+u(x,y) = (1+2*x+3*y)^n
+v(x,y) = (1+3*x-2*y)^n
+∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
+∂u∂y(x,y) = 3*n*(1+2*x+3*y)^abs(n-1)
+∂v∂x(x,y) = 3*n*(1+3*x-2*y)^abs(n-1)
+∂v∂y(x,y) = -2*n*(1+3*x-2*y)^abs(n-1)
+∂²u∂x²(x,y)  = 4*n*(n-1)*(1+2*x+3*y)^abs(n-2)
+∂²u∂x∂y(x,y) = 6*n*(n-1)*(1+2*x+3*y)^abs(n-2)
+∂²u∂y²(x,y)  = 9*n*(n-1)*(1+2*x+3*y)^abs(n-2)
+∂²v∂x²(x,y)  = 9*n*(n-1)*(1+3*x-2*y)^abs(n-2)
+∂²v∂x∂y(x,y) = -6*n*(n-1)*(1+3*x-2*y)^abs(n-2)
+∂²v∂y²(x,y)  = 4*n*(n-1)*(1+3*x-2*y)^abs(n-2)
 
 
 ε₁₁(x,y) = ∂u∂x(x,y)
@@ -87,7 +87,7 @@ prescribe!(elements["Ω"],:ν=>(x,y,z)->ν)
 prescribe!(elements["Ω"],:Ē=>(x,y,z)->Ē)
 prescribe!(elements["Ω"],:ν̄ =>(x,y,z)->ν̄ ) 
 
-prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->0.1*ℎ^2/2/𝐺, index=:𝑔)
+prescribe!(elements["Ωˢ"],:τ=>(x,y,z)->1*ℎ^2/2/𝐺, index=:𝑔)
 prescribe!(elements["Ωˢ"],:ℎ=>(x,y,z)->ℎ, index=:𝑔) 
 prescribe!(elements["Ωˢ"],:E=>(x,y,z)->E, index=:𝑔)
 prescribe!(elements["Ωˢ"],:ν=>(x,y,z)->ν, index=:𝑔)
@@ -125,16 +125,14 @@ prescribe!(elements["Ωᵍ"],:∂v∂x=>(x,y,z)->∂v∂x(x,y))
 prescribe!(elements["Ωᵍ"],:∂v∂y=>(x,y,z)->∂v∂y(x,y))
 
 𝑎 = ∫∫σᵢⱼσₖₗdxdy=>elements["Ωˢ"]
-# 𝑎ᵝ = ∫∫εᵢⱼσᵢⱼdxdy_new=>(elements["Ωˢ"],elements["Ω"])
 𝑏 = [
     ∫σᵢⱼnⱼuᵢds=>(elements["∂Ωˢ"],elements["∂Ω"]),
     ∫∫∇σᵢⱼuᵢdxdy=>(elements["Ωˢ"],elements["Ω"]),
 ]
 𝑏ᵅ = ∫σᵢⱼnⱼgᵢds=>(elements["Γˢ"],elements["Γ"])
 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy=>elements["Ωˢ"]
-c = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Real=>elements["Ω"]
-# 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_Taylor=>elements["Ωˢ"]
-# 𝑏ᵝ = ∫∫τ∇σᵢⱼ∇σᵢₖdxdy_new=>elements["Ωˢ"]
+
+
 𝑓 = ∫∫vᵢbᵢdxdy=>elements["Ω"]
 
 kᵖᵖ = zeros(3*nₛ*nₑ,3*nₛ*nₑ)
@@ -148,15 +146,12 @@ kᵖᵖˢ = zeros(3*nₛ*nₑ,3*nₛ*nₑ)
 fᵖˢ = zeros(3*nₛ*nₑ)
 
 𝑎(kᵖᵖ)
-c(kᵘᵘ,fᵘ)
-# 𝑎ᵝ(kᵖᵘ)
 𝑏(kᵖᵘ)
 𝑏ᵅ(kᵖᵘᵅ,fᵖᵅ)
 # 𝑏ᵝ(kᵖᵖˢ,fᵖˢ)
-# 𝑏ᵝ(kᵖᵖ,fᵖ)
 𝑓(fᵘ)
 
-d = [(kᵖᵖ + kᵖᵖˢ) (kᵖᵘ+kᵖᵘᵅ);(kᵖᵘ+kᵖᵘᵅ)' kᵘᵘ]\[(fᵖ+fᵖˢ+fᵖᵅ);-fᵘ]
+d = [(kᵖᵖ + kᵖᵖˢ) (kᵖᵘ+kᵖᵘᵅ);(kᵖᵘ+kᵖᵘᵅ)' kᵘᵘ]\[(fᵖ-fᵖˢ+fᵖᵅ);-fᵘ]
 # d = [kᵖᵖ  kᵖᵘ;kᵖᵘ' zeros(2*nₚ,2*nₚ)]\[fᵖ;-fᵘ]
 
 d₁ = d[3*nₛ*nₑ+1:2:end]
@@ -165,37 +160,6 @@ push!(nodes,:d₁=>d₁,:d₂=>d₂)
 
 # 𝐿₂ = L₂(elements["Ωᵍ"])
 𝐻ₑ,𝐿₂= Hₑ_PlaneStress(elements["Ωᵍ"])
-println(log10(𝐿₂))
-println(log10(𝐻ₑ))
+println(𝐿₂)
+println(𝐻ₑ)
 
-dₛ = zeros(3*nₛ*nₑ)
-
-
-dᵤ = zeros(2*nₚ)
-for (i,node) in enumerate(nodes)
-    x = node.x
-    y = node.y
-    dᵤ[2*i-1] = u(x,y)
-    dᵤ[2*i]   = v(x,y)
-end
-
-dₛ = zeros(3*nₛ*nₑ)
-for i in 1:nₑ
-    dₛ[3*i-2] = Ē/(1+ν̄ )/(1-2*ν̄ )*((1-ν̄ )*2 + ν̄ *6)
-    dₛ[3*i-1] = Ē/(1+ν̄ )/(1-2*ν̄ )*(ν̄ *2 + (1-ν̄ )*6)
-    dₛ[3*i]   = Ē/(1+ν̄ )*4
-end
-
-# for (i,elm) in enumerate(elements["Ωˢ"])
-#     for j in 1:nₛ
-#        𝓒ₑ = elm.𝓒
-#        dₛ[3*i*j-2] = Ē/(1+ν̄ )/(1-2*ν̄ )*((1-ν̄ )*2* + ν̄ *6)
-#        dₛ[3*i*j-1] = Ē/(1+ν̄ )/(1-2*ν̄ )*(ν̄ *2 + (1-ν̄ )*6)
-#        dₛ[3*i*j]   = Ē/(1+ν̄ )*4
-#      end 
-# end
-
-err1 = kᵖᵖ*dₛ + kᵖᵘ*dᵤ - fᵖ
-err2 = kᵖᵘ'*dₛ + fᵘ
-# err3 = kᵖᵖˢ*dₛ  - fᵖˢ
-err4 = kᵖᵘᵅ*dᵤ - fᵖᵅ
